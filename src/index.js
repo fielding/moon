@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import GesturesPlugin from 'phaser3-rex-plugins/plugins/gestures-plugin.js';
 
 import map from './assets/tilemaps/map.json'
 
@@ -90,22 +91,36 @@ class Moon extends Phaser.Scene
             }
         }.bind(this));
 
+        const pinch = this.rexGestures.add.pinch({ enable: true });
+
+        pinch   
+            .on('drag1', function (pinch) {
+                const drag1Vector = pinch.drag1Vector;
+                console.log(this.cameras)
+                this.cameras.main.scrollX -= drag1Vector.x / this.cameras.main.zoom;
+                this.cameras.main.scrollY -= drag1Vector.y / this.cameras.main.zoom;
+            }, this)
+            .on('pinch', function (pinch) {
+                const scaleFactor = pinch.scaleFactor;
+                this.cameras.main.zoom *= scaleFactor;
+            }, this);
+
     }
 
     update (time, delta) {
         this.controls.update(delta);
 
-        if(this.input.activePointer.isDown) {
-			if(this.origDragPoint) {
-				this.cameras.main.scrollX += (this.origDragPoint.x - this.input.activePointer.position.x) / this.cameras.main.zoom;
-			  this.cameras.main.scrollY += (this.origDragPoint.y - this.input.activePointer.position.y) / this.cameras.main.zoom;
-			}
+        // if(this.input.activePointer.isDown) {
+		// 	if(this.origDragPoint) {
+		// 		this.cameras.main.scrollX += (this.origDragPoint.x - this.input.activePointer.position.x) / this.cameras.main.zoom;
+		// 	  this.cameras.main.scrollY += (this.origDragPoint.y - this.input.activePointer.position.y) / this.cameras.main.zoom;
+		// 	}
 			
-			this.origDragPoint = this.input.activePointer.position.clone();
-		}
-		else {
-			this.origDragPoint = null;
-		}
+		// 	this.origDragPoint = this.input.activePointer.position.clone();
+		// }
+		// else {
+		// 	this.origDragPoint = null;
+		// }
     }
 }
 
@@ -125,7 +140,14 @@ const config = {
     width: window.innerWidth,
     height: window.innerHeight,
     transparent: true,
-    scene: Moon
+    scene: Moon,
+    plugins: {
+        scene: [{
+            key: 'rexGestures',
+            plugin: GesturesPlugin,
+            mapping: 'rexGestures',
+        }],
+    },
 };
 
 const game = new Phaser.Game(config);
