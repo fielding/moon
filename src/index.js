@@ -10,6 +10,8 @@ import terrain_2 from './assets/tilesets/terrain_2.png';
 import sg_1 from './assets/tilesets/sg_1.png';
 import sg_2 from './assets/tilesets/sg_2.png';
 
+import selector from './assets/images/selector.png';
+
 class Moon extends Phaser.Scene
 {
     constructor () {
@@ -24,34 +26,36 @@ class Moon extends Phaser.Scene
         this.load.image('sg_1', sg_1);
         this.load.image('sg_2', sg_2)
         this.load.tilemapTiledJSON('map', map);
+
+        this.load.image('selector', selector);
     }
       
     create () {
     
-        const map = this.add.tilemap('map');
+        this.map = this.add.tilemap('map');
 
-        console.log(map);
+
         
         // this is really misleading... the name is actually the first argument ... tiled won't let me rename it for some reason
         // and the second argument is the string name of the image we loaded above
-        const tileset_ground = map.addTilesetImage('../tilesets/ground.png', 'ground');
-        const tileset_terrain_1 = map.addTilesetImage('../tilesets/terrain_1.png', 'terrain_1');
-        const tileset_terrain_2 = map.addTilesetImage('../tilesets/terrain_2.png', 'terrain_2');
-        const tileset_sg_1 = map.addTilesetImage('../tilesets/sg_1.png', 'sg_1');
-        const tileset_sg_2 = map.addTilesetImage('../tilesets/sg_2.png', 'sg_2');
+        const tileset_ground = this.map.addTilesetImage('../tilesets/ground.png', 'ground');
+        const tileset_terrain_1 = this.map.addTilesetImage('../tilesets/terrain_1.png', 'terrain_1');
+        const tileset_terrain_2 = this.map.addTilesetImage('../tilesets/terrain_2.png', 'terrain_2');
+        const tileset_sg_1 = this.map.addTilesetImage('../tilesets/sg_1.png', 'sg_1');
+        const tileset_sg_2 = this.map.addTilesetImage('../tilesets/sg_2.png', 'sg_2');
         
         // note: the cullPadding values can be optimized a ton... I was just tired of the tiles unloading when they shouldn't
 
-        const layer_ground = map
+        const layer_ground = this.map
             .createLayer('ground', [ tileset_ground ])
             .setCullPadding(22, 22);
 
-        const layer_terrain = map
+        const layer_terrain = this.map
             .createLayer('terrain', [ tileset_terrain_1, tileset_terrain_2 ])
-            .setCullPadding(22, 22);
+            .setCullPadding(22, 22)
 
         // I have no friggin clue why the layer below needs the offset that I had to add.... help! if you know tell me
-        const layer_sg = map
+        const layer_sg = this.map
             .createLayer('sg', [ tileset_sg_1, tileset_sg_2 ], 1408 - 128, 704 - 128)
             .setCullPadding(22, 22)
             // .renderDebug(this.add.graphics());
@@ -96,7 +100,6 @@ class Moon extends Phaser.Scene
         pinch   
             .on('drag1', function (pinch) {
                 const drag1Vector = pinch.drag1Vector;
-                console.log(this.cameras)
                 this.cameras.main.scrollX -= drag1Vector.x / this.cameras.main.zoom;
                 this.cameras.main.scrollY -= drag1Vector.y / this.cameras.main.zoom;
             }, this)
@@ -104,6 +107,20 @@ class Moon extends Phaser.Scene
                 const scaleFactor = pinch.scaleFactor;
                 this.cameras.main.zoom *= scaleFactor;
             }, this);
+
+
+        // this needs to be updated
+        // this.marker = this.add.image().setTexture('selector');
+        // this is from bhefore when marker was a Graphic instead of Image
+        this.marker = this.add.graphics();
+        this.marker.lineStyle(10, 0x000000, 1);
+        this.marker.strokeRect(0, 0, this.map.tileWidth * layer_sg.scaleX, this.map.tileHeight * layer_sg.scaleY); 
+        this.marker.strokeRect(0, 0, 256, 124);
+   
+        // maybe https://phaser.io/examples/v3/view/input/cursors/custom-cursor is thbe correct answer
+
+        
+        console.log(this.map);
 
     }
 
@@ -121,12 +138,30 @@ class Moon extends Phaser.Scene
 		// else {
 		// 	this.origDragPoint = null;
 		// }
+        var worldPoint = this.input.activePointer.positionToCamera(this.cameras.main);
+
+        const pointerTiles = Phaser.Tilemaps.Components.GetWorldToTileXYFunction(1)(worldPoint.x, worldPoint.y, true, null, this.cameras.main, this.map.layers[2]);
+
+        // console.log('pointerTiles', pointerTiles);
+
+
+        // console.log(this.map.worldToTileY(worldPoint.y, true, this.cameras.main, 'sg'));
+        // console.log({ pointerTiles.x, pointerTiles.y });
+
+        let tmpVec = Phaser.Tilemaps.Components.GetTileToWorldXYFunction(1)(pointerTiles.x, pointerTiles.y, null, this.cameras.main, this.map.layers[2]);
+        // this.marker.y = Phaser.Tilemaps.Components.GetTileToWorldYFunction(1)(pointerTiles.y)
+        // Snap to tile coordinates, but in world space
+        // this.marker.x = (pointerTiles.x);
+        // this.marker.y = this.map.tileToWorldY(pointerTiles.y);
+
+        
+
+        this.marker.x = tmpVec.x;
+        this.marker.y = tmpVec.y;
     }
 }
 
 const body = document.querySelector('body');
-console.log(body);
-console.log(background);
 body.style.backgroundColor = '#000000';
 
 body.style.backgroundImage = `url(${background})`;
