@@ -4,6 +4,10 @@ import GesturesPlugin from 'phaser3-rex-plugins/plugins/gestures-plugin.js';
 import map from './assets/tilemaps/map.json'
 
 import background from './assets/images/space_background.gif';
+import edge_corner from './assets/images/edge.png';
+import edge_left from './assets/images/edge_left.png';
+import edge_right from './assets/images/edge_right.png';
+
 import ground from './assets/tilesets/ground.png'; 
 import terrain_1 from './assets/tilesets/terrain_1.png';
 import terrain_2 from './assets/tilesets/terrain_2.png';
@@ -21,6 +25,9 @@ class Moon extends Phaser.Scene
     preload () {
         this.load.image('background', background);
         this.load.image('ground', ground);
+        this.load.image('edge_corner', edge_corner);
+        this.load.image('edge_left', edge_left);
+        this.load.image('edge_right', edge_right);
         this.load.image('terrain_1', terrain_1);
         this.load.image('terrain_2', terrain_2);
         this.load.image('sg_1', sg_1);
@@ -60,6 +67,7 @@ class Moon extends Phaser.Scene
             .setCullPadding(22, 22)
             // .renderDebug(this.add.graphics());
 
+        this.createImageLayers();
 
         const cursors = this.input.keyboard.createCursorKeys();
 
@@ -156,8 +164,23 @@ class Moon extends Phaser.Scene
 
         
 
-        this.marker.x = tmpVec.x;
-        this.marker.y = tmpVec.y;
+    }
+
+    createImageLayers() {
+        const res = [];
+        const names = this.map.getImageLayerNames();
+
+        names.forEach(name => {
+            const idx = this.map.getImageIndex(name);
+            const layer = this.map.images[idx];
+            // this part below is so random ... need to figure these out fu
+            const img = this.add.image(layer.x - 1408, layer.y + (704 - 64), name);
+            img.setOrigin(0, 0);
+            console.log(img.originX, img.originY);
+            res.push(img);
+        });
+
+        return res;
     }
 }
 
